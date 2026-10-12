@@ -1,0 +1,86 @@
+java
+```
+// Association Rule Mining using Apriori in WEKA
+// Datasets: weather.nominal.arff, iris.arff, glass.arff
+
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Discretize;
+import weka.filters.unsupervised.instance.Resample;
+import weka.associations.Apriori;
+
+public class AssociationRuleMining {
+
+    public static void main(String[] args) throws Exception {
+
+        // 1. Weather Dataset
+        System.out.println("\n=== WEATHER DATASET ===");
+        Instances weather = loadDataset("weather.nominal.arff");
+        runApriori(weather, 0.2, 0.8);
+
+        // 2. Iris Dataset Before Discretization
+        System.out.println("\n=== IRIS BEFORE DISCRETIZATION ===");
+        Instances iris = loadDataset("iris.arff");
+        runApriori(iris, 0.2, 0.8);
+
+        // 3. Iris Dataset After Discretization
+        System.out.println("\n=== IRIS AFTER DISCRETIZATION ===");
+        Instances discretizedIris = discretize(iris);
+        runApriori(discretizedIris, 0.2, 0.8);
+
+        // 4. Glass Dataset
+        System.out.println("\n=== GLASS DATASET ===");
+        Instances glass = loadDataset("glass.arff");
+
+        // Apply Resample Filter
+        Resample resample = new Resample();
+        resample.setInputFormat(glass);
+        resample.setSampleSizePercent(50);
+        glass = Filter.useFilter(glass, resample);
+
+        // Apply Discretize Filter
+        Instances discretizedGlass = discretize(glass);
+
+        // Run Apriori on the processed dataset
+        System.out.println("\n=== GLASS AFTER RESAMPLING AND DISCRETIZATION ===");
+        runApriori(discretizedGlass, 0.1, 0.7);
+    }
+
+    // Load dataset
+    public static Instances loadDataset(String fileName) throws Exception {
+        DataSource source = new DataSource(fileName);
+        return source.getDataSet();
+    }
+
+    // Discretize numeric attributes
+    public static Instances discretize(Instances data) throws Exception {
+        Discretize filter = new Discretize();
+        filter.setBins(3);
+        filter.setAttributeIndices("first-last");
+        filter.setInputFormat(data);
+        return Filter.useFilter(data, filter);
+    }
+
+    // Run Apriori algorithm
+    public static void runApriori(
+            Instances data,
+            double support,
+            double confidence) throws Exception {
+
+        Apriori apriori = new Apriori();
+
+        apriori.setLowerBoundMinSupport(support);
+        apriori.setMinMetric(confidence);
+        apriori.setNumRules(10);
+
+        apriori.buildAssociations(data);
+
+        System.out.println("Instances: " + data.numInstances());
+        System.out.println("Attributes: " + data.numAttributes());
+        System.out.println("Minimum Support: " + support);
+        System.out.println("Minimum Confidence: " + confidence);
+        System.out.println(apriori);
+    }
+}
+```
